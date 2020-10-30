@@ -20,8 +20,14 @@ limitations under the License.
 #include <Availability.h>
 #include <utility>
 #include <vector>
+// used in printcode
+#include <string>
+#include <cstdio>
+#include <iostream>
 
 #include "tensorflow/lite/delegates/gpu/common/status.h"
+
+#include "tensorflow/lite/delegates/gpu/metal/marcos.h"
 
 // Compile-time message: print define name and value.
 #define VALUE_TO_STRING(x) #x
@@ -33,6 +39,23 @@ namespace gpu {
 namespace metal {
 
 id<MTLDevice> GetBestSupportedMetalDevice() { return MTLCreateSystemDefaultDevice(); }
+
+// Print out the metal shader codes to be compiled
+absl::Status PrintMetalShaderCode(NSString* functionName, NSString* code, NSDictionary<NSString*, NSString*>* macros) {
+  NSString *anotherCode = [[NSString alloc] initWithString:code];
+  // 1) replace macros
+  for (NSString *key in macros.allKeys) {
+    anotherCode = [anotherCode stringByReplacingOccurrencesOfString:key withString: macros[key]];
+  }
+  // 2) print
+  std::string finalCode = std::string([anotherCode UTF8String]);
+  printf("Metal Shader Code for: %s\n", std::string([functionName UTF8String]).c_str());
+  printf("%s", finalCode.c_str());
+  //std::cout << finalCode;
+  printf("\nMetal Shader Code Finish.\n");
+
+  return absl::OkStatus();
+}
 
 absl::Status CreateComputeProgram(id<MTLDevice> device, NSString* code, NSString* functionName,
                                   NSDictionary<NSString*, NSString*>* macros,
@@ -65,6 +88,9 @@ absl::Status CreateComputeProgram(id<MTLDevice> device, NSString* code, NSString
 
   [options setFastMathEnabled:YES];
   [options setPreprocessorMacros:macros];
+#ifdef DUMP_CODE
+  PrintMetalShaderCode(functionName, code, macros);
+#endif
   NSError* error = nil;
   id<MTLLibrary> library = [device newLibraryWithSource:code options:options error:&error];
   if (!library) {

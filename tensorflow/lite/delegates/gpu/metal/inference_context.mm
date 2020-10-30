@@ -29,6 +29,9 @@ limitations under the License.
 #include "tensorflow/lite/delegates/gpu/metal/compute_task_descriptor.h"
 #include "tensorflow/lite/delegates/gpu/metal/runtime_options.h"
 
+#include "tensorflow/lite/delegates/gpu/metal/marcos.h"
+#include "tensorflow/lite/delegates/gpu/metal/simple_timer.h"
+
 using ::tflite::gpu::BHWC;
 using ::tflite::gpu::metal::ComputeTaskDescriptorPtr;
 using ::tflite::gpu::metal::RuntimeOptions;
@@ -163,6 +166,28 @@ using ::tflite::gpu::TensorUsageRecord;
     if (encoderBlock != nil) {
       commandEncoder = encoderBlock(i == _computeTasks.size() - 1);
     }
+  }
+}
+
+- (void)encodeWithEncoder:(id<MTLComputeCommandEncoder>)commandEncoder
+       commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+       inputOutputBuffers:(const std::map<ValueId, id<MTLBuffer>>&)inputOutputBuffers
+             encoderBlock:(id<MTLComputeCommandEncoder> (^)(bool isLast, MetalTimer& timer))encoderBlock {
+  for (int i = 0; i < _computeTasks.size(); ++i) {
+    auto& task = _computeTasks[i];
+#ifdef DUMP_CODE
+    printf("\n ===== for: %s ===== \n",  [task getDescription].c_str());
+    static MetalTimer timer;
+    timer.Start();
+#endif
+    [task encodeWithEncoder:commandEncoder inputOutputBuffers:inputOutputBuffers];
+    if (encoderBlock != nil) {
+      commandEncoder = encoderBlock(i == _computeTasks.size() - 1, timer);
+    }
+      
+#ifdef DUMP_CODE
+    printf("\n ===== time: %.8f ms =====\n", timer.GetTimeMS());
+#endif
   }
 }
 

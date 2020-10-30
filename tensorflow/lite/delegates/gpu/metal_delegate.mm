@@ -50,6 +50,8 @@ limitations under the License.
 #include "tensorflow/lite/kernels/kernel_util.h"
 #include "tensorflow/lite/minimal_logging.h"
 
+#include "tensorflow/lite/delegates/gpu/metal/simple_timer.h"
+
 namespace tflite {
 namespace gpu {
 namespace metal {
@@ -349,6 +351,7 @@ class Delegate {
       storage_type_size = sizeof(HalfBits);
       runtime_options.storage_precision = RuntimeOptions::Precision::FP16;
       if (device_info.IsRoundToNearestSupported()) {
+        // true for A11 - A13
         runtime_options.accumulator_precision = RuntimeOptions::Precision::FP16;
       } else {
         runtime_options.accumulator_precision = RuntimeOptions::Precision::FP32;
@@ -496,6 +499,7 @@ class Delegate {
       }
     }
 
+    /*
     [inference_context_
          encodeWithEncoder:encoder
         inputOutputBuffers:bphwc4_buffers_
@@ -519,6 +523,22 @@ class Delegate {
                   command_buffer = [command_queue_ commandBuffer];
                   encoder = [command_buffer computeCommandEncoder];
                 }
+                return encoder;
+              }];
+              */
+    [inference_context_
+         encodeWithEncoder:encoder
+         commandBuffer:command_buffer
+        inputOutputBuffers:bphwc4_buffers_
+              encoderBlock:^(bool isLast, MetalTimer& timer) {
+                
+                [encoder endEncoding];
+                [command_buffer commit];
+                [command_buffer waitUntilCompleted];
+                timer.Stop();
+                command_buffer = [command_queue_ commandBuffer];
+                encoder = [command_buffer computeCommandEncoder];
+                
                 return encoder;
               }];
     for (const auto& output : graph_outputs_) {

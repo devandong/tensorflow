@@ -18,6 +18,8 @@ limitations under the License.
 #include <Availability.h>
 #include <string>
 #include <tuple>
+// used in print dispatching configs
+#include <cstdio>
 
 #include "tensorflow/lite/delegates/gpu/common/model.h"
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
@@ -26,6 +28,8 @@ limitations under the License.
 #include "tensorflow/lite/delegates/gpu/common/util.h"
 #include "tensorflow/lite/delegates/gpu/metal/common.h"
 #include "tensorflow/lite/delegates/gpu/metal/runtime_options.h"
+
+#include "tensorflow/lite/delegates/gpu/metal/marcos.h"
 
 using ::tflite::gpu::AlignByN;
 using ::tflite::gpu::BHWC;
@@ -40,6 +44,18 @@ using ::tflite::gpu::uint3;
 using ::tflite::gpu::ValueId;
 
 namespace {
+
+// Print dispatching configurations
+void PrintDispatchingConfigs(MTLSize groupSize, MTLSize groupCount) {
+  printf("\nGroupSapes: (%d, %d, %d), Threads: (%d, %d, %d)\n", 
+                    static_cast<int>(groupSize.width),
+                    static_cast<int>(groupSize.height),
+                    static_cast<int>(groupSize.depth),
+                    static_cast<int>(groupCount.width),
+                    static_cast<int>(groupCount.height),
+                    static_cast<int>(groupCount.depth));
+}
+
 
 struct InputBuffer {
   ValueId uid;
@@ -70,6 +86,10 @@ struct UniformBuffer {
   uint3 _groupsCount;
   DispatchParamsFunction _resizeFunction;
   std::string _description;
+}
+
+- (std::string)getDescription {
+  return _description;
 }
 
 - (absl::Status)compileWithDevice:(id<MTLDevice>)device
@@ -123,6 +143,9 @@ struct UniformBuffer {
   NSString* code = [NSString stringWithCString:desc->shader_source.c_str()
                                       encoding:[NSString defaultCStringEncoding]];
   id<MTLComputePipelineState> program;
+#ifdef DUMP_CODE
+  printf("\n ===== for: %s =====\n", desc->description.c_str());
+#endif
   RETURN_IF_ERROR(CreateComputeProgram(device, code, @"ComputeFunction", macros, &program));
   if (!program) {
     return absl::InternalError("Unknown shader compilation error");
@@ -254,6 +277,9 @@ struct UniformBuffer {
 
   MTLSize groupsCount = MTLSizeMake(_groupsCount.x, _groupsCount.y, _groupsCount.z);
   MTLSize groupsSize = MTLSizeMake(_groupsSize.x, _groupsSize.y, _groupsSize.z);
+#ifdef DUMP_CODE#
+  PrintDispatchingConfigs(groupsSize, groupsCount);
+#endif
   [encoder dispatchThreadgroups:groupsCount threadsPerThreadgroup:groupsSize];
 }
 

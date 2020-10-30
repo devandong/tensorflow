@@ -28,6 +28,7 @@ cc_library(
         ":compute_task_descriptor",
         ":environment",
         ":runtime_options",
+        ":self_defined_marcos",
         "//tensorflow/lite/delegates/gpu/common:model",
         "//tensorflow/lite/delegates/gpu/common:operations",
         "//tensorflow/lite/delegates/gpu/common:shape",
@@ -216,6 +217,11 @@ ios_unit_test(
 cc_library(
     name = "runtime_options",
     hdrs = ["runtime_options.h"],
+)
+
+cc_library(
+    name = "self_defined_marcos",
+    hdrs = ["marcos.h"],
 )
 
 objc_library(

@@ -60,6 +60,9 @@ limitations under the License.
        inputOutputBuffers:
            (const std::map<::tflite::gpu::ValueId, id<MTLBuffer>>&)inputOutputBuffers;
 
+// devan: enanble access for task description
+- (std::string)getDescription;
+
 @end
 
 #endif  // TENSORFLOW_LITE_DELEGATES_GPU_METAL_COMPUTE_TASK_H_

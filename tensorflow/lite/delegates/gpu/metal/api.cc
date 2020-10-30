@@ -16,6 +16,8 @@ limitations under the License.
 #include "tensorflow/lite/delegates/gpu/metal/api.h"
 
 #include <vector>
+// for printing node information
+#include <cstdio>
 
 #include "absl/strings/substitute.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
@@ -48,6 +50,8 @@ limitations under the License.
 #include "tensorflow/lite/delegates/gpu/metal/kernels/transpose_conv.h"
 #include "tensorflow/lite/delegates/gpu/metal/kernels/winograd.h"
 #include "tensorflow/lite/delegates/gpu/metal/runtime_options.h"
+
+#include "tensorflow/lite/delegates/gpu/metal/marcos.h"
 
 namespace tflite {
 namespace gpu {
@@ -431,6 +435,8 @@ absl::Status Compile(const GraphFloat32& graph, const DeviceInfo& device_info,
     last_value_id = std::max(last_value_id, static_cast<int>(value->id));
   }
   for (const auto& node : graph.nodes()) {
+    //auto operation_type = node->operation.type;
+    //printf("\n NodeType: %s \n", operation_type.c_str());
     std::vector<ValueId> inputs;
     for (auto& input : graph.FindInputs(node->id)) {
       inputs.push_back(static_cast<ValueId>(input->id));
@@ -457,6 +463,9 @@ absl::Status Compile(const GraphFloat32& graph, const DeviceInfo& device_info,
     for (const auto& task : tasks) {
       task->description = node->operation.type + "_" + std::to_string(node->id);
     }
+  #ifdef DUMP_CODE
+    printf("\n ===== %s: %d tasks! =====\n", node->operation.type.c_str(), tasks.size());
+  #endif
     compiled_model->insert(compiled_model->end(), tasks.begin(), tasks.end());
   }
   return absl::OkStatus();

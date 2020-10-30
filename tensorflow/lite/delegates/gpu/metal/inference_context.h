@@ -28,6 +28,8 @@ limitations under the License.
 #include "tensorflow/lite/delegates/gpu/metal/compute_task_descriptor.h"
 #include "tensorflow/lite/delegates/gpu/metal/runtime_options.h"
 
+#include "tensorflow/lite/delegates/gpu/metal/simple_timer.h"
+
 /// Stages of model preprocessing:
 /// 1. Operations' initialization. All operations are initialized and added into
 ///    model. Every operation is represented as a vector of
@@ -81,6 +83,12 @@ limitations under the License.
 - (void)encodeWithEncoder:(id<MTLComputeCommandEncoder>)commandEncoder
        inputOutputBuffers:(const std::map<::tflite::gpu::ValueId, id<MTLBuffer>>&)inputOutputBuffers
              encoderBlock:(id<MTLComputeCommandEncoder> (^)(bool isLast))encoderBlock;
+
+
+- (void)encodeWithEncoder:(id<MTLComputeCommandEncoder>)commandEncoder
+       commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+       inputOutputBuffers:(const std::map<::tflite::gpu::ValueId, id<MTLBuffer>>&)inputOutputBuffers
+             encoderBlock:(id<MTLComputeCommandEncoder> (^)(bool isLast, MetalTimer& timer))encoderBlock;
 
 @end
 
