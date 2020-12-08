@@ -169,26 +169,26 @@ using ::tflite::gpu::TensorUsageRecord;
   }
 }
 
+#ifdef DUMP_CODE
 - (void)encodeWithEncoder:(id<MTLComputeCommandEncoder>)commandEncoder
        commandBuffer:(id<MTLCommandBuffer>)commandBuffer
        inputOutputBuffers:(const std::map<ValueId, id<MTLBuffer>>&)inputOutputBuffers
              encoderBlock:(id<MTLComputeCommandEncoder> (^)(bool isLast, MetalTimer& timer))encoderBlock {
   for (int i = 0; i < _computeTasks.size(); ++i) {
     auto& task = _computeTasks[i];
-#ifdef DUMP_CODE
+
     printf("\n ===== for: %s ===== \n",  [task getDescription].c_str());
     static MetalTimer timer;
     timer.Start();
-#endif
+
     [task encodeWithEncoder:commandEncoder inputOutputBuffers:inputOutputBuffers];
     if (encoderBlock != nil) {
       commandEncoder = encoderBlock(i == _computeTasks.size() - 1, timer);
     }
-      
-#ifdef DUMP_CODE
+
     printf("\n ===== time: %.8f ms =====\n", timer.GetTimeMS());
-#endif
   }
 }
+#endif
 
 @end

@@ -277,7 +277,7 @@ struct UniformBuffer {
 
   MTLSize groupsCount = MTLSizeMake(_groupsCount.x, _groupsCount.y, _groupsCount.z);
   MTLSize groupsSize = MTLSizeMake(_groupsSize.x, _groupsSize.y, _groupsSize.z);
-#ifdef DUMP_CODE#
+#ifdef DUMP_CODE
   PrintDispatchingConfigs(groupsSize, groupsCount);
 #endif
   [encoder dispatchThreadgroups:groupsCount threadsPerThreadgroup:groupsSize];
